@@ -47,7 +47,7 @@ class SMWNSProtect {
 		}
 
 		// Allow to group
-		if ( $self->groupCheck($user) ) {
+		if ( $this->groupCheck($user) ) {
 			return true;
 		}
 

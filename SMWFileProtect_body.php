@@ -2,7 +2,7 @@
 /*
  * SMWFileProtect Class
  *
- * Copyright (C) 2011-2014  Toni Hermoso Pulido <toniher@cau.cat>
+ * Copyright (C) 2011-2015  Toni Hermoso Pulido <toniher@cau.cat>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,8 +20,7 @@
  */
 
 
-class SMWFileProtect
-{
+class SMWFileProtect {
 	private $dbr;
 	private $db_page, $db_page_links;
 
@@ -65,12 +64,13 @@ class SMWFileProtect
 		//Two groups of properties
 		$allowprops = 0;
 		$allowusers = 0;
+
 		global $SMWFileProtectReferUsers;
 		global $SMWFileProtectReferProps;
 
 		#Check if variables exist
 		if ( !isset( $SMWFileProtectReferUsers ) ) {
-			if ( !isset( $SMWFileProtectReferUsers ) ) {
+			if ( !isset( $SMWFileProtectReferProps ) ) {
 				#If not defined -> allow fully -> CAREFUL
 				return(true);
 			}
@@ -174,7 +174,7 @@ class SMWFileProtect
 								$numresp++;
 							}
 							
-												#If report is made visible for the requester
+							#If report is made visible for the requester
 							if ($visible == 'true') {
 								$allowtagp = 1;
 							}
@@ -255,7 +255,7 @@ class SMWFileProtect
 	 * Load the referers list for the article $pageid
 	 */
 	 
-	public function loadListReferer( $pageid ) {
+	private function loadListReferer( $pageid ) {
 	
 		if (! is_numeric($pageid)) return array();
 		//$SQL2 = "select g.il_from from ".$this->db_image_links." g, ".$this->db_page." p where g.il_to=p.page_title and p.page_id=?";
@@ -350,4 +350,3 @@ class SMWFileProtect
 
 }
 
-?>

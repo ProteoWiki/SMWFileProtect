@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (C) 2011 Toni Hermoso Pulido <toniher@cau.cat>
+ * Copyright (C) 2011-2015 Toni Hermoso Pulido <toniher@cau.cat>
  * http://www.cau.cat
  *
  * This program is free software; you can redistribute it and/or modify
@@ -32,31 +32,44 @@ if ( !defined( 'SMW_VERSION' ) ) {
 }
 
 
-$wgAutoloadClasses['SMWFileProtect'] = dirname(__FILE__) . '/SMWFileProtect_body.php';
+call_user_func( function () {
 
-$SMWFileProtectRights = array("sysop"); // We allow sysops always
-$SMWFileProtectReferUsers = array("Has User"); // User pages
-$SMWFileProtectReferProps = array("Is Visible"); // Booleans
+	$GLOBALS['wgAutoloadClasses']['SMWFileProtect'] = dirname(__FILE__) . '/SMWFileProtect_body.php';
+	$GLOBALS['wgAutoloadClasses']['SMWNSProtect'] = dirname(__FILE__) . '/SMWNSProtect_body.php';
 
+	$GLOBALS['SMWFileProtectRights'] = array("sysop"); // We allow sysops always
+	$GLOBALS['SMWFileProtectReferUsers'] = array("Has User"); // User pages
+	$GLOBALS['SMWFileProtectReferProps'] = array("Is Visible"); // Booleans
+	$GLOBALS['SMWFileProtectReferNS'] = true; // Take into protection of Namespaces where linked
+	
+	# Informations
+	$GLOBALS['wgExtensionCredits']['other'][] = array(
+			'path' => __FILE__,
+			'name' => 'SMWFileProtect',
+			'author' => 'Toni Hermoso',
+			'version' => '0.3',
+			'url' => 'https://www.mediawiki.org/wiki/User:Toniher',
+			'description' => 'Semantic protection of files',
+	);
+	
+	$GLOBALS['wgHooks']['userCan'][] = 'SMWProtectuserCan';
+	$GLOBALS['wgHooks']['userCan'][] = 'SMWProtectNSuserCan';
 
-# Informations
-$wgExtensionCredits['other'][] = array(
-        'path' => __FILE__,
-        'name' => 'SMWFileProtect',
-        'author' => 'Toni Hermoso',
-        'version' => '0.2',
-        'url' => 'https://www.mediawiki.org/wiki/User:Toniher',
-        'description' => 'Semantic protection of files',
-);
-
-$wgHooks['userCan'][] = 'ImageReferuserCan';
-
+} );
 
 # Refer userCan
-function ImageReferuserCan( $title, $user, $action, &$result ) {
+function SMWProtectuserCan( $title, $user, $action, &$result ) {
 
 	$object = new SMWFileProtect;
 	$result = $object->executeImageRefer($title, $user);
+	return($result);
+
+}
+
+function SMWProtectNSuserCan( $title, $user, $action, &$result ) {
+
+	$object = new SMWNSProtect;
+	$result = $object->executeNSRefer($title, $user);
 	return($result);
 
 }

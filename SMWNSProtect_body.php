@@ -133,7 +133,7 @@ class SMWNSProtect {
 
 		$detect = 0;
 
-		if ( in_array( "*", $lckgroups ) ) {
+		if ( in_array( "*", $lckgrps ) ) {
 			$detect = 1;
 		} else {
 			foreach ( $usergrps as $usergrp ) {

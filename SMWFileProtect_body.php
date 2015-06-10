@@ -298,9 +298,8 @@ class SMWFileProtect {
 		// We use the Semantic MediaWiki Processor
 		// $smwgIP is defined by Semantic MediaWiki, and we don't allow
 		// this file to be sourced unless Semantic MediaWiki is included.
-		global $smwgIP;
-		include_once( $smwgIP . "/includes/SMW_QueryProcessor.php" );
-		
+		// TODO: Rewrite all this
+
 		$params = array();
 		$inline = true;
 		$printlabel = "";

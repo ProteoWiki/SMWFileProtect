@@ -40,8 +40,14 @@ class SMWNSProtect {
 		#Get PageID
 		$pageid =$title->getArticleID();
 		
+		// First we check
+		global $SMWFileProtectReferNS;
+		if ( ! $SMWFileProtectReferNS ) {
+			return true;
+		}
+
 		// Allow to group
-		if (self::groupcheck($user)) {
+		if ( $self->groupCheck($user) ) {
 			return true;
 		}
 
@@ -59,7 +65,6 @@ class SMWNSProtect {
 
 		//Count linked pages
 		$nbReferer= count( $listReferer );
-
 
 		if ( $nbReferer > 0 ) {
 			
@@ -142,7 +147,7 @@ class SMWNSProtect {
 		return $detect;
 	}
 
-	function groupcheck( $user ) {
+	private function groupCheck( $user ) {
 
 		global $SMWFileProtectRights;
 		foreach ( $SMWFileProtectRights as $grp ) {

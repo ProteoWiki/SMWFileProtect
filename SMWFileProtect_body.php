@@ -46,7 +46,7 @@ class SMWFileProtect {
 		$username = $wgContLang->getNsText(NS_USER).":".$user->getName();
 		
 		// Allow to group
-		if (self::groupcheck($user)) {
+		if ( $this->groupCheck($user) ) {
 			return true;
 		}
 
@@ -338,7 +338,7 @@ class SMWFileProtect {
 	}
 	
 
-	function groupcheck( $user ) {
+	function groupCheck( $user ) {
 
 		global $SMWFileProtectRights;
 		foreach ( $SMWFileProtectRights as $grp ) {

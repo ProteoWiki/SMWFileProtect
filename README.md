@@ -12,4 +12,4 @@ $SMWFileProtectReferUsers = array("Has User"); // Property that refers to pages 
 
 $SMWFileProtectReferProps = array("Is Visible"); // Boolean property that can be used to grant permission to the page.
 
-
+$SMWFileProtectReferNS = true; // This allows to block viewing based on Lockdown Extension https://www.mediawiki.org/wiki/Extension:Lockdown

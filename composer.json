@@ -1,0 +1,29 @@
+{
+	"name": "mediawiki/smw-file-protect",
+	"type": "mediawiki-extension",
+	"description": "Extension for protecting files depending on the linked pages",
+	"keywords": [
+		"MediaWiki",
+		"SMW",
+		"Semantic MediaWiki",
+		"Protection",
+		"File"
+	],
+	"homepage": "https://github.com/ProteoWiki",
+	"license": "GPL-3.0+",
+	"authors": [
+		{
+			"name": "Toni Hermoso Pulido",
+			"role": "Developer"
+		}
+	],
+	"require": {
+		"php": ">=5.3.0",
+		"composer/installers": "1.*,>=1.0.1",
+		"mediawiki/semantic-media-wiki": ">=2.0"
+	},
+	"autoload": {
+		"files": ["SMWFileProtect.php"],
+		"classmap": ["SMWFileProtect_body.php", "SMWNSProtect_body.php"]
+	}
+}

@@ -6,7 +6,7 @@ Please check http://www.mediawiki.org/wiki/Manual:Image_Authorization for proper
 
 ## Parameters
 
-$SMWFileProtectRights = array("sysop"); // Which roles are always allowed to view files
+$SMWFileProtectRights = array("sysop"); // Which roles are always allowed to view files no matter the linked pages
 
 $SMWFileProtectReferUsers = array("Has User"); // Property that refers to pages that link to other pages, for instance user pages, assuming that a page is created or assigned to a user
 

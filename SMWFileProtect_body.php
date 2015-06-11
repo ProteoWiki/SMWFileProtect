@@ -68,7 +68,8 @@ class SMWFileProtect {
 		global $SMWFileProtectReferUsers;
 		global $SMWFileProtectReferProps;
 
-		#Check if variables exist
+		# Check if variables exist
+		# System should point which are the users
 		if ( !isset( $SMWFileProtectReferUsers ) ) {
 			if ( !isset( $SMWFileProtectReferProps ) ) {
 				#If not defined -> allow fully -> CAREFUL
@@ -80,7 +81,7 @@ class SMWFileProtect {
 					return(true);
 				}
 				else {
-					// Block
+					// Block or not depending on Refer prop only
 					$allowprops=1;
 				}
 			}
@@ -95,21 +96,15 @@ class SMWFileProtect {
 			else {
 			
 				if ( !isset( $SMWFileProtectReferProps ) ) {
-					
 					// No block
 					$allowprops = 0;
 				}
-				
 				else {
-
-					
 					if( count( $SMWFileProtectReferProps ) > 0 ) {
-						
 						// Block
 						$allowprops = 1;
 					}
 				}
-			
 				// Block userwise
 				$allowusers = 1;
 			}
@@ -213,15 +208,12 @@ class SMWFileProtect {
 							#If report is made visible for the requester
 							if ($visible == 'true') {
 								$allowtagp = 1;
-							}
-							
-							else {
+							} else {
 								$allowtagp = 0;
 							}
 							
 							#If no semantic content -> Allow
 							if ($numresp == 0) { $allowtagp = -1;}
-							
 						}
 						
 					} 
@@ -286,31 +278,37 @@ class SMWFileProtect {
 
 
 	/**
-	 * This function returns to results of a certain query
-	 * Thank you Yaron Koren for advices concerning this code
-	 * @param $query_string String : the query
-	 * @param $properties_to_display array(String): array of property names to display
-	 * @param $display_title Boolean : add the page title in the result
-	 * @return TODO
-	 */
+	* This function returns to results of a certain query
+	* Thank you Yaron Koren for advices concerning this code
+	* @param $query_string String : the query
+	* @param $properties_to_display array(String): array of property names to display
+	* @param $display_title Boolean : add the page title in the result
+	* @return TODO
+	*/
 	static function getQueryResults( $query_string, $properties_to_display, $display_title ) {
-		
+	
 		// We use the Semantic MediaWiki Processor
 		// $smwgIP is defined by Semantic MediaWiki, and we don't allow
 		// this file to be sourced unless Semantic MediaWiki is included.
-		// TODO: Rewrite all this
+		global $smwgIP;
+		
+		if ( file_exists( $smwgIP . "/includes/SMW_QueryProcessor.php") ) {
+			include_once( $smwgIP . "/includes/SMW_QueryProcessor.php" );
+		} else {
+			include_once( $smwgIP . "/includes/query/SMW_QueryProcessor.php" );
+		}
 
 		$params = array();
 		$inline = true;
 		$printlabel = "";
 		$printouts = array();
-		
+
 		// add the page name to the printouts
 		if ( $display_title ) {
 			$to_push = new SMWPrintRequest( SMWPrintRequest::PRINT_THIS, $printlabel );
 			array_push( $printouts, $to_push );
 		}
-		
+
 		// Push the properties to display in the printout array.
 		foreach ( $properties_to_display as $property ) {
 			if ( class_exists( 'SMWPropertyValue' ) ) { // SMW 1.4
@@ -320,7 +318,7 @@ class SMWFileProtect {
 			}
 			array_push( $printouts, $to_push );
 		}
-		
+
 		if ( version_compare( SMW_VERSION, '1.6.1', '>' ) ) {
 			SMWQueryProcessor::addThisPrintout( $printouts, $params );
 			$params = SMWQueryProcessor::getProcessedParams( $params, $printouts );
@@ -329,12 +327,13 @@ class SMWFileProtect {
 		else {
 			$format = 'auto';
 		}
-		
+
 		$query = SMWQueryProcessor::createQuery( $query_string, $params, $inline, $format, $printouts );
 		$results = smwfGetStore()->getQueryResult( $query );
-		
+
 		return $results;
 	}
+
 	
 
 	function groupCheck( $user ) {

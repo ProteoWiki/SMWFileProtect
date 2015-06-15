@@ -41,7 +41,11 @@ call_user_func( function () {
 	$GLOBALS['SMWFileProtectReferUsers'] = array("Has User"); // User pages
 	$GLOBALS['SMWFileProtectReferProps'] = array("Is Visible"); // Booleans
 	$GLOBALS['SMWFileProtectReferNS'] = true; // Take into protection of Namespaces where linked
-	
+
+	// TODO: Whitelist if available in certain pages
+	$GLOBALS['SMWFileProtectWhiteListPages'] = array();
+
+
 	# Informations
 	$GLOBALS['wgExtensionCredits']['other'][] = array(
 			'path' => __FILE__,

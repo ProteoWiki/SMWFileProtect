@@ -1,29 +1,44 @@
 {
-	"name": "mediawiki/smw-file-protect",
-	"type": "mediawiki-extension",
-	"description": "Extension for protecting files depending on the linked pages",
-	"keywords": [
-		"MediaWiki",
-		"SMW",
-		"Semantic MediaWiki",
-		"Protection",
-		"File"
-	],
-	"homepage": "https://github.com/ProteoWiki",
-	"license": "GPL-3.0+",
-	"authors": [
-		{
-			"name": "Toni Hermoso Pulido",
-			"role": "Developer"
-		}
-	],
-	"require": {
-		"php": ">=5.3.0",
-		"composer/installers": "1.*,>=1.0.1",
-		"mediawiki/semantic-media-wiki": ">=2.0"
-	},
-	"autoload": {
-		"files": ["SMWFileProtect.php"],
-		"classmap": ["SMWFileProtect_body.php", "SMWNSProtect_body.php"]
-	}
+    "name": "mediawiki/smw-file-protect",
+    "type": "mediawiki-extension",
+    "description": "Protects files and namespaces in Semantic MediaWiki based on user rights and properties.",
+    "keywords": [
+        "MediaWiki",
+        "SMW",
+        "Semantic MediaWiki",
+        "Protection",
+        "File"
+    ],
+	  "homepage": "https://github.com/ProteoWiki/SMWFileProtect",
+    "license": "GPL-2.0-or-later",
+    "authors": [
+        {
+            "name": "Toni Hermoso Pulido",
+            "email": "toniher@cau.cat"
+        }
+    ],
+    "require": {
+      "php": ">=7.2",
+      "composer/installers": "1.*,>=1.0.1"
+    },
+    "require-dev": {
+      "mediawiki/minus-x": "1.1.1",
+      "php-parallel-lint/php-console-highlighter": "1.0.0",
+      "php-parallel-lint/php-parallel-lint": "1.3.2"
+    },
+    "scripts": {
+      "test": [
+        "parallel-lint . --exclude vendor --exclude node_modules",
+        "minus-x check ."
+      ],
+      "fix": [
+        "minus-x fix ."
+      ]
+    },
+    "config": {
+      "allow-plugins": {
+        "composer/installers": true
+      }
+    }
+
 }

@@ -1,0 +1,29 @@
+{
+    "name": "SMWFileProtect",
+    "version": "0.4.0",
+    "author": [
+        "Toni Hermoso Pulido <toniher@cau.cat>"
+    ],
+    "url": "http://www.cau.cat",
+    "description": "Protects files and namespaces in Semantic MediaWiki based on user rights and properties.",
+    "type": "other",
+    "requires": {
+        "MediaWiki": ">= 1.25",
+        "extensions": {
+            "SemanticMediaWiki": "*"
+        }
+    },
+    "AutoloadClasses": {
+        "SMWFileProtect": "SMWFileProtect_body.php",
+        "SMWNSProtect": "SMWNSProtect_body.php"
+    },
+    "config": [
+        "SMWFileProtectRights",
+        "SMWFileProtectReferUsers",
+        "SMWFileProtectReferProps",
+        "SMWFileProtectReferNS",
+        "SMWFileProtectWhiteListPages"
+    ],
+    "manifest_version": 2,
+    "license-name": "GPL-2.0-or-later"
+}

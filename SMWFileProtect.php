@@ -1,6 +1,7 @@
 <?php
+
 /**
- * Copyright (C) 2011-2015 Toni Hermoso Pulido <toniher@cau.cat>
+ * Copyright (C) 2011-2025 Toni Hermoso Pulido <toniher@cau.cat>
  * http://www.cau.cat
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,61 +22,11 @@
  */
 
 
-if ( !defined( 'MEDIAWIKI' ) ) {
-	echo "Not a valid entry point";
-	exit( 1 );
-}
 
-if ( !defined( 'SMW_VERSION' ) ) {
-	echo 'This extension requires Semantic MediaWiki to be installed.';
-	exit( 1 );
+// This file is part of the SMWFileProtect extension. Use wfLoadExtension( 'SMWFileProtect' ) to enable it in LocalSettings.php.
+if (function_exists('wfLoadExtension')) {
+    die('This extension must be loaded via extension.json. Please add wfLoadExtension( "SMWFileProtect" ); to your LocalSettings.php');
 }
 
 
-call_user_func( function () {
-
-	$GLOBALS['wgAutoloadClasses']['SMWFileProtect'] = dirname(__FILE__) . '/SMWFileProtect_body.php';
-	$GLOBALS['wgAutoloadClasses']['SMWNSProtect'] = dirname(__FILE__) . '/SMWNSProtect_body.php';
-
-	$GLOBALS['SMWFileProtectRights'] = array("sysop"); // We allow sysops always
-	$GLOBALS['SMWFileProtectReferUsers'] = array("Has User"); // User pages
-	$GLOBALS['SMWFileProtectReferProps'] = array("Is Visible"); // Booleans
-	$GLOBALS['SMWFileProtectReferNS'] = true; // Take into protection of Namespaces where linked
-
-	// TODO: Whitelist if available in certain pages
-	$GLOBALS['SMWFileProtectWhiteListPages'] = array();
-
-
-	# Informations
-	$GLOBALS['wgExtensionCredits']['other'][] = array(
-			'path' => __FILE__,
-			'name' => 'SMWFileProtect',
-			'author' => 'Toni Hermoso',
-			'version' => '0.3',
-			'url' => 'https://www.mediawiki.org/wiki/User:Toniher',
-			'description' => 'Semantic protection of files',
-	);
-	
-	$GLOBALS['wgHooks']['userCan'][] = 'SMWProtectuserCan';
-	$GLOBALS['wgHooks']['userCan'][] = 'SMWProtectNSuserCan';
-
-} );
-
-# Refer userCan
-function SMWProtectuserCan( $title, $user, $action, &$result ) {
-
-	$object = new SMWFileProtect;
-	$result = $object->executeImageRefer($title, $user);
-	return($result);
-
-}
-
-function SMWProtectNSuserCan( $title, $user, $action, &$result ) {
-
-	$object = new SMWNSProtect;
-	$result = $object->executeNSRefer($title, $user);
-	return($result);
-
-}
-
-?>
+// Hook functions and configuration should be registered via extension.json.

@@ -18,11 +18,26 @@
         "SMWNSProtect": "SMWNSProtect_body.php"
     },
     "config": {
-        "SMWFileProtectRights": ["sysop"],
-        "SMWFileProtectReferUsers": ["Has User"],
-        "SMWFileProtectReferProps": ["Is Visible"],
-        "SMWFileProtectReferNS": true,
-        "SMWFileProtectWhiteListPages": []
+        "SMWFileProtectRights": {
+            "value": ["sysop"],
+            "description": "User groups allowed to bypass file protection."
+        },
+        "SMWFileProtectReferUsers": {
+            "value": ["Has User"],
+            "description": "User page properties used for file protection."
+        },
+        "SMWFileProtectReferProps": {
+            "value": ["Is Visible"],
+            "description": "Boolean properties used for file protection."
+        },
+        "SMWFileProtectReferNS": {
+            "value": true,
+            "description": "Enable namespace-based protection."
+        },
+        "SMWFileProtectWhiteListPages": {
+            "value": [],
+            "description": "Pages whitelisted from file protection."
+        }
     },
     "manifest_version": 2,
     "license-name": "GPL-2.0-or-later"

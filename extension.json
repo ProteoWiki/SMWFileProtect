@@ -4,7 +4,7 @@
     "author": [
         "Toni Hermoso Pulido <toniher@cau.cat>"
     ],
-    "url": "http://www.cau.cat",
+	  "url": "https://github.com/ProteoWiki/SMWFileProtect",
     "description": "Protects files and namespaces in Semantic MediaWiki based on user rights and properties.",
     "type": "other",
     "requires": {

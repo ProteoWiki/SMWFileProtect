@@ -41,9 +41,9 @@
         }
     },
     "Hooks": {
-        "userCan": [
-            "SMWFileProtectHooks::SMWProtectuserCan",
-            "SMWFileProtectHooks::SMWProtectNSuserCan"
+        "onGetUserPermissionsErrors": [
+            "SMWFileProtectHooks::onGetUserPermissionsErrors",
+            "SMWFileProtectHooks::onGetUserPermissionsErrorsNS"
         ]
     },
     "manifest_version": 2,

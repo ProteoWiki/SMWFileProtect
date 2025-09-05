@@ -20,6 +20,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  */
 
+use MediaWiki\MediaWikiServices;
 
 class SMWNSProtect
 {
@@ -30,7 +31,9 @@ class SMWNSProtect
 
     public function __construct()
     {
-        $this->dbr = wfGetDB(DB_SLAVE);
+        $this->dbr = MediaWikiServices::getInstance()
+        ->getDBLoadBalancer()
+        ->getConnection(DB_REPLICA);
     }
 
     /**

@@ -41,7 +41,7 @@
         }
     },
     "Hooks": {
-        "onGetUserPermissionsErrors": [
+        "getUserPermissionsErrors": [
             "SMWFileProtectHooks::onGetUserPermissionsErrors",
             "SMWFileProtectHooks::onGetUserPermissionsErrorsNS"
         ]

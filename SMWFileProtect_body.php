@@ -20,6 +20,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  */
 
+use MediaWiki\MediaWikiServices;
 
 class SMWFileProtect
 {
@@ -30,7 +31,10 @@ class SMWFileProtect
 
     public function __construct()
     {
-        $this->dbr = wfGetDB(DB_SLAVE);
+        $this->dbr = MediaWikiServices::getInstance()
+        ->getDBLoadBalancer()
+        ->getConnection(DB_REPLICA);
+        // $this->dbr = wfGetDB('replica');
     }
 
     /**
@@ -48,7 +52,11 @@ class SMWFileProtect
         //Allow permission
         $allowtag = 0;
 
-        $username = $wgContLang->getNsText(NS_USER).":".$user->getName();
+        $namespaceName = MediaWikiServices::getInstance()
+        ->getContentLanguage()
+        ->getNsText(NS_USER);
+
+        $username = $namespaceName . ':' . $user->getName();
 
         // Allow to group
         if ($this->groupCheck($user)) {

@@ -15,7 +15,8 @@
     },
     "AutoloadClasses": {
         "SMWFileProtect": "SMWFileProtect_body.php",
-        "SMWNSProtect": "SMWNSProtect_body.php"
+        "SMWNSProtect": "SMWNSProtect_body.php",
+        "SMWFileProtectHooks": "SMWFileProtect.hooks.php"
     },
     "config": {
         "SMWFileProtectRights": {
@@ -38,6 +39,12 @@
             "value": [],
             "description": "Pages whitelisted from file protection."
         }
+    },
+    "Hooks": {
+        "userCan": [
+            "SMWFileProtectHooks::SMWProtectuserCan",
+            "SMWFileProtectHooks::SMWProtectNSuserCan"
+        ]
     },
     "manifest_version": 2,
     "license-name": "GPL-2.0-or-later"

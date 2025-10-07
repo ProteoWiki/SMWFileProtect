@@ -28,12 +28,26 @@ class SMWNSProtect
     private $db_page;
     private $db_page_links;
 
-
+    /**
+    * Class init function defining globals
+    **/
     public function __construct()
     {
         $this->dbr = MediaWikiServices::getInstance()
         ->getDBLoadBalancer()
         ->getConnection(DB_REPLICA);
+
+        $config = MediaWikiServices::getInstance()->getMainConfig();
+
+        global $SMWFileProtectReferNS;
+        if (is_null($SMWFileProtectReferNS)) {
+            $SMWFileProtectReferNS = $config->get('SMWFileProtectReferNS');
+        }
+        global $SMWFileProtectRights;
+        if (is_null($SMWFileProtectRights)) {
+            $SMWFileProtectRights = $config->get('SMWFileProtectRights');
+        }
+
     }
 
     /**
@@ -80,13 +94,13 @@ class SMWNSProtect
                 // Get namespace
                 if (array_key_exists($NSReferer, $wgNamespacePermissionLockdown)) {
                     if (array_key_exists("read", $wgNamespacePermissionLockdown[$NSReferer])) {
-                        $detect = $this->groupDetect($wgNamespacePermissionLockdown[$NSReferer]["read"], $user->getEffectiveGroups());
+                        $detect = $this->groupDetect($wgNamespacePermissionLockdown[$NSReferer]["read"], $user->getGroups());
                         if ($detect == 0) {
                             return false;
                         }
                     } else {
                         if (array_key_exists("*", $wgNamespacePermissionLockdown[$NSReferer])) {
-                            $detect = $this->groupDetect($wgNamespacePermissionLockdown[$NSReferer]["*"], $user->getEffectiveGroups());
+                            $detect = $this->groupDetect($wgNamespacePermissionLockdown[$NSReferer]["*"], $user->getGroups());
                             if ($detect == 0) {
                                 return false;
                             }
@@ -114,7 +128,6 @@ class SMWNSProtect
         if (! is_numeric($pageid)) {
             return array();
         }
-        //$SQL2 = "select g.il_from from ".$this->db_image_links." g, ".$this->db_page." p where g.il_to=p.page_title and p.page_id=?";
 
         $table = array( 'imagelinks', 'page' );
         $vars = array( 'il_from' );
@@ -123,8 +136,6 @@ class SMWNSProtect
         $condoptions = array();
 
         $result = $this->dbr->select($table, $vars, $conds, 'SMWFileProtect::loadListReferer', $options, $condoptions);
-
-        // $tbs=$this->dbr->safeQuery($SQL2,$pageid);
 
         $listReferer = array();
         $i = 0;
@@ -159,6 +170,9 @@ class SMWNSProtect
         return $detect;
     }
 
+    /**
+     * Function for checking if user is in one of the allowed groups
+     */
     private function groupCheck($user)
     {
 

@@ -21,6 +21,10 @@
  */
 
 use MediaWiki\MediaWikiServices;
+use SMW\DIProperty;
+use SMW\StoreFactory;
+use SMWQueryProcessor;
+use SMWPrintRequest;
 
 class SMWFileProtect
 {
@@ -34,7 +38,26 @@ class SMWFileProtect
         $this->dbr = MediaWikiServices::getInstance()
         ->getDBLoadBalancer()
         ->getConnection(DB_REPLICA);
-        // $this->dbr = wfGetDB('replica');
+
+        $config = MediaWikiServices::getInstance()->getMainConfig();
+
+
+
+        global $SMWFileProtectRights;
+        if (is_null($SMWFileProtectRights)) {
+            $SMWFileProtectRights = $config->get('SMWFileProtectRights');
+        }
+
+        global $SMWFileProtectReferUsers;
+        if (is_null($SMWFileProtectReferUsers)) {
+            $SMWFileProtectReferUsers = $config->get('SMWFileProtectReferUsers');
+        }
+
+        global $SMWFileProtectReferProps;
+        if (is_null($SMWFileProtectReferProps)) {
+            $SMWFileProtectReferProps = $config->get('SMWFileProtectReferProps');
+        }
+
     }
 
     /**
@@ -302,15 +325,9 @@ class SMWFileProtect
     public static function getQueryResults($query_string, $properties_to_display, $display_title)
     {
 
-        // We use the Semantic MediaWiki Processor
-        // $smwgIP is defined by Semantic MediaWiki, and we don't allow
-        // this file to be sourced unless Semantic MediaWiki is included.
-        global $smwgIP;
-
-        if (file_exists($smwgIP . "/includes/SMW_QueryProcessor.php")) {
-            include_once($smwgIP . "/includes/SMW_QueryProcessor.php");
-        } else {
-            include_once($smwgIP . "/includes/query/SMW_QueryProcessor.php");
+        // Ensure SMW is loaded
+        if (!class_exists('SMWQueryProcessor')) {
+            throw new \RuntimeException('Semantic MediaWiki is not installed or enabled.');
         }
 
         $params = array();
@@ -324,23 +341,26 @@ class SMWFileProtect
             array_push($printouts, $to_push);
         }
 
+        var_dump($properties_to_display);
         // Push the properties to display in the printout array.
         foreach ($properties_to_display as $property) {
-            if (class_exists('SMWPropertyValue')) { // SMW 1.4
-                $to_push = new SMWPrintRequest(SMWPrintRequest::PRINT_PROP, $printlabel, SMWPropertyValue::makeProperty($property));
-            } else {
-                $to_push = new SMWPrintRequest(SMWPrintRequest::PRINT_PROP, $printlabel, Title::newFromText($property, SMW_NS_PROPERTY));
+            var_dump($property);
+            if (strpos($property, 'Property:') !== 0) {
+                $property = 'Property:' . $property;
             }
+            $diProperty = new DIProperty($property);
+            var_dump($diProperty);
+            $to_push = new SMWPrintRequest(
+                SMWPrintRequest::PRINT_PROP,
+                $property // <-- Modern SMW property creation
+            );
+
             array_push($printouts, $to_push);
         }
 
-        if (version_compare(SMW_VERSION, '1.6.1', '>')) {
-            SMWQueryProcessor::addThisPrintout($printouts, $params);
-            $params = SMWQueryProcessor::getProcessedParams($params, $printouts);
-            $format = null;
-        } else {
-            $format = 'auto';
-        }
+        SMWQueryProcessor::addThisPrintout($printouts, $params);
+        $params = SMWQueryProcessor::getProcessedParams($params, $printouts);
+        $format = null;
 
         $query = SMWQueryProcessor::createQuery($query_string, $params, $inline, $format, $printouts);
         $results = smwfGetStore()->getQueryResult($query);

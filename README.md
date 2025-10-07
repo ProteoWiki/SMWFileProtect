@@ -4,6 +4,8 @@ Extension to protect access to files based on which pages images are embedded an
 
 Please check http://www.mediawiki.org/wiki/Manual:Image_Authorization for proper setup first.
 
+**DISCLAIMER**: _Only Lockdown functions are currently working. SMW ones are disabled for now._
+
 ## Parameters
 
 ```

@@ -3,7 +3,7 @@
 /*
  * SMWFileProtect Class
  *
- * Copyright (C) 2011-2025  Toni Hermoso Pulido <toniher@cau.cat>
+ * Copyright (C) 2011-2026  Toni Hermoso Pulido <toniher@cau.cat>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,168 +20,41 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  */
 
-use MediaWiki\MediaWikiServices;
+use MediaWiki\Config\Config;
+use MediaWiki\Title\Title;
 
 class SMWNSProtect
 {
-    private $dbr;
-    private $db_page;
-    private $db_page_links;
-
     /**
-    * Class init function defining globals
-    **/
-    public function __construct()
-    {
-        $this->dbr = MediaWikiServices::getInstance()
-        ->getDBLoadBalancer()
-        ->getConnection(DB_REPLICA);
-
-        $config = MediaWikiServices::getInstance()->getMainConfig();
-
-        global $SMWFileProtectReferNS;
-        if (is_null($SMWFileProtectReferNS)) {
-            $SMWFileProtectReferNS = $config->get('SMWFileProtectReferNS');
-        }
-        global $SMWFileProtectRights;
-        if (is_null($SMWFileProtectRights)) {
-            $SMWFileProtectRights = $config->get('SMWFileProtectRights');
-        }
-
-    }
-
-    /**
-     * The main function call to display the backward navigation element for
-     * the page  $pageid
+     * False if any of $referers is in a namespace that Lockdown does not let $groups read.
+     *
+     * @param Title[] $referers
+     * @param string[] $groups effective groups of the user
      */
-    public function executeNSRefer($title, $user)
+    public static function canRead(array $referers, array $groups, Config $config): bool
     {
-
-        global $wgContLang;
-
-        #Get PageID
-        $pageid = $title->getArticleID();
-
-        // First we check
-        global $SMWFileProtectReferNS;
-        if (! $SMWFileProtectReferNS) {
+        if (!$config->has('NamespacePermissionLockdown')) {
+            // Lockdown is not loaded
             return true;
         }
+        $lockdown = $config->get('NamespacePermissionLockdown');
 
-        // Allow to group
-        if ($this->groupCheck($user)) {
-            return true;
-        }
-
-        #Get list of linked page namespaces
-        $listReferer = array();
-        $listReferer = $this->loadListRefererNS($pageid);
-
-        // Namespace permissions Lockdown
-        global $wgNamespacePermissionLockdown;
-
-        if (!isset($wgNamespacePermissionLockdown)) {
-            // If no Lockdown, true
-            return true;
-        }
-
-        //Count linked pages
-        $nbReferer = count($listReferer);
-
-        if ($nbReferer > 0) {
-
-            foreach ($listReferer as $NSReferer) {
-                // Get namespace
-                if (array_key_exists($NSReferer, $wgNamespacePermissionLockdown)) {
-                    if (array_key_exists("read", $wgNamespacePermissionLockdown[$NSReferer])) {
-                        $detect = $this->groupDetect($wgNamespacePermissionLockdown[$NSReferer]["read"], $user->getGroups());
-                        if ($detect == 0) {
-                            return false;
-                        }
-                    } else {
-                        if (array_key_exists("*", $wgNamespacePermissionLockdown[$NSReferer])) {
-                            $detect = $this->groupDetect($wgNamespacePermissionLockdown[$NSReferer]["*"], $user->getGroups());
-                            if ($detect == 0) {
-                                return false;
-                            }
-                        }
-                    }
-                }
+        foreach ($referers as $referer) {
+            $allowed = self::readGroups($lockdown, $referer->getNamespace());
+            if (is_array($allowed) && !array_intersect($groups, $allowed)) {
+                return false;
             }
-
-            return true;
-
-        } else {
-            return true;
         }
-
-
+        return true;
     }
 
     /**
-     * Load the referers list for the article $pageid
+     * Groups allowed to read namespace $ns, resolved like Lockdown's
+     * Hooks::namespaceGroups(). Null means unrestricted.
      */
-
-    private function loadListRefererNS($pageid)
+    private static function readGroups(array $lockdown, int $ns): ?array
     {
-
-        if (! is_numeric($pageid)) {
-            return array();
-        }
-
-        $table = array( 'imagelinks', 'page' );
-        $vars = array( 'il_from' );
-        $conds = array( 'il_to=page_title', 'page_id='.$pageid );
-        $options = array();
-        $condoptions = array();
-
-        $result = $this->dbr->select($table, $vars, $conds, 'SMWFileProtect::loadListReferer', $options, $condoptions);
-
-        $listReferer = array();
-        $i = 0;
-
-        foreach ($result as $row) {
-            $title = Title::newFromId($row->il_from);
-            if ((get_class($title) == "Title") && ($title->exists())) {
-                $listReferer[$i] = $title->getNamespace();
-                $i++;
-            }
-        }
-
-        return(array_unique($listReferer));
+        $groups = $lockdown[$ns]['read'] ?? $lockdown['*']['read'] ?? $lockdown[$ns]['*'] ?? null;
+        return $groups === '*' ? null : $groups;
     }
-
-    private function groupDetect($lckgrps, $usergrps)
-    {
-
-        $detect = 0;
-
-        if (in_array("*", $lckgrps)) {
-            $detect = 1;
-        } else {
-            foreach ($usergrps as $usergrp) {
-                if (in_array($usergrp, $lckgrps)) {
-                    $detect = 1;
-                }
-            }
-
-        }
-
-        return $detect;
-    }
-
-    /**
-     * Function for checking if user is in one of the allowed groups
-     */
-    private function groupCheck($user)
-    {
-
-        global $SMWFileProtectRights;
-        foreach ($SMWFileProtectRights as $grp) {
-            if (in_array($grp, $user->getGroups())) {
-                return true;
-            }
-        }
-    }
-
 }

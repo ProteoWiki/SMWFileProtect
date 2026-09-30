@@ -3,7 +3,7 @@
 /*
  * SMWFileProtect Class
  *
- * Copyright (C) 2011-2025  Toni Hermoso Pulido <toniher@cau.cat>
+ * Copyright (C) 2011-2026  Toni Hermoso Pulido <toniher@cau.cat>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,365 +20,71 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  */
 
-use MediaWiki\MediaWikiServices;
+use MediaWiki\Config\Config;
+use MediaWiki\Title\Title;
+use MediaWiki\User\UserIdentity;
 use SMW\DIProperty;
+use SMW\DIWikiPage;
 use SMW\StoreFactory;
-use SMWQueryProcessor;
-use SMWPrintRequest;
 
 class SMWFileProtect
 {
-    private $dbr;
-    private $db_page;
-    private $db_page_links;
-
-
-    public function __construct()
-    {
-        $this->dbr = MediaWikiServices::getInstance()
-        ->getDBLoadBalancer()
-        ->getConnection(DB_REPLICA);
-
-        $config = MediaWikiServices::getInstance()->getMainConfig();
-
-
-
-        global $SMWFileProtectRights;
-        if (is_null($SMWFileProtectRights)) {
-            $SMWFileProtectRights = $config->get('SMWFileProtectRights');
-        }
-
-        global $SMWFileProtectReferUsers;
-        if (is_null($SMWFileProtectReferUsers)) {
-            $SMWFileProtectReferUsers = $config->get('SMWFileProtectReferUsers');
-        }
-
-        global $SMWFileProtectReferProps;
-        if (is_null($SMWFileProtectReferProps)) {
-            $SMWFileProtectReferProps = $config->get('SMWFileProtectReferProps');
-        }
-
-    }
-
     /**
-     * The main function call to display the backward navigation element for
-     * the page  $pageid
+     * False if any of $referers restricts its files through SMW properties:
+     * - a SMWFileProtectReferUsers property has values and none is $user;
+     * - a SMWFileProtectReferProps property has a value that is not true.
+     * A page without values for these properties does not restrict anything.
+     *
+     * @param Title[] $referers
      */
-    public function executeImageRefer($title, $user)
+    public static function canRead(array $referers, UserIdentity $user, Config $config): bool
     {
+        $store = StoreFactory::getStore();
+        $userPage = Title::makeTitle(NS_USER, $user->getName());
 
-        global $wgContLang;
+        foreach ($referers as $referer) {
+            $subject = DIWikiPage::newFromTitle($referer);
 
-        #Get PageID
-        $pageid = $title->getArticleID();
-
-        //Allow permission
-        $allowtag = 0;
-
-        $namespaceName = MediaWikiServices::getInstance()
-        ->getContentLanguage()
-        ->getNsText(NS_USER);
-
-        $username = $namespaceName . ':' . $user->getName();
-
-        // Allow to group
-        if ($this->groupCheck($user)) {
-            return true;
-        }
-
-        #Get list of linked pages
-        $listReferer = array();
-        $listReferer = $this->loadListReferer($pageid);
-
-        //Allow permission
-        $allowtag = 0;
-        $allowtagp = -1;
-
-        //Count linked pages
-        $nbReferer = count($listReferer);
-
-        //Two groups of properties
-        $allowprops = 0;
-        $allowusers = 0;
-
-        global $SMWFileProtectReferUsers;
-        global $SMWFileProtectReferProps;
-
-        # Check if variables exist
-        # System should point which are the users
-        if (!isset($SMWFileProtectReferUsers)) {
-            if (!isset($SMWFileProtectReferProps)) {
-                #If not defined -> allow fully -> CAREFUL
-                return(true);
-            } else {
-                if (count($SMWFileProtectReferProps) < 1) {
-                    #If not defined -> allow fully -> CAREFUL
-                    return(true);
-                } else {
-                    // Block or not depending on Refer prop only
-                    $allowprops = 1;
-                }
-            }
-        } else {
-
-            #If not string value -> allow fully -> CAREFUL
-            if (count($SMWFileProtectReferUsers) < 1) {
-                return(true);
-            } else {
-
-                if (!isset($SMWFileProtectReferProps)) {
-                    // No block
-                    $allowprops = 0;
-                } else {
-                    if (count($SMWFileProtectReferProps) > 0) {
-                        // Block
-                        $allowprops = 1;
-                    }
-                }
-                // Block userwise
-                $allowusers = 1;
-            }
-        }
-
-        if ($nbReferer > 0) {
-
-            foreach ($listReferer as $pageReferer) {
-
-                //number of results
-                $numresu = 0;
-                $numresp = 0;
-
-                //First query case
-
-                // Query each linked page for the properties
-
-                if ($allowusers > 0) {
-
-                    foreach ($SMWFileProtectReferUsers as $propUser) {
-
-                        $propUser = str_replace(" ", "_", $propUser);
-                        $properties_to_display = array();
-                        $properties_to_display[0] = $propUser;
-                        $results = self::getQueryResults("[[$pageReferer]][[$propUser::+]]", $properties_to_display, false);
-
-                        $viewerlist = array();
-
-                        while ($row = $results->getNext()) {
-                            $stat = $row[1];
-                            $ostat = $stat->getNextObject();
-                            if ($ostat) {
-                                $viewerlist = explode(",", $ostat->getLongWikiText());
-                            }
-                            $numresu++;
-                        }
-
-                        #If User is specifically allowed
-                        if (in_array($username, $viewerlist)) {
-                            $allowtag = 1;
-                        }
-                    }
-
-                    #If no semantic content -> Allow
-                    if ($numresu == 0) {
-                        $allowtag = 1;
-                    }
-
-                    if ($allowprops > 0) {
-
-                        foreach ($SMWFileProtectReferProps as $propProp) {
-
-                            $propProp = str_replace(" ", "_", $propProp);
-                            $properties_to_display = array();
-                            $properties_to_display[0] = $propProp;
-                            $results = self::getQueryResults("[[$pageReferer]][[$propProp::+]]", $properties_to_display, false);
-
-                            $visible = false;
-
-                            while ($row = $results->getNext()) {
-                                $stat = $row[1];
-                                $visible = $stat->getNextObject()->getLongWikiText();
-
-                                $numresp++;
-                            }
-
-                            #If report is made visible for the requester
-                            if ($visible == 'true') {
-                                $allowtagp = 1;
-                            } else {
-                                $allowtagp = 0;
-                            }
-
-                            #If no semantic content -> Allow
-                            if ($numresp == 0) {
-                                $allowtagp = -1;
-                            }
-
-                        }
-
-                    }
-
-                } else {
-
-                    if ($allowprops > 0) {
-
-                        foreach ($SMWFileProtectReferProps as $propProp) {
-
-                            $propProp = str_replace(" ", "_", $propProp);
-                            $properties_to_display = array();
-                            $properties_to_display[0] = $propProp;
-                            $results = self::getQueryResults("[[$pageReferer]][[$propProp::+]]", $properties_to_display, false);
-
-                            $visible = false;
-
-                            while ($row = $results->getNext()) {
-                                $stat = $row[0];
-                                $visible = $stat->getNextObject()->getLongWikiText();
-
-                                $numresp++;
-                            }
-
-                            #If report is made visible for the requester
-                            if ($visible == 'true') {
-                                $allowtagp = 1;
-                            } else {
-                                $allowtagp = 0;
-                            }
-
-                            #If no semantic content -> Allow
-                            if ($numresp == 0) {
-                                $allowtagp = -1;
-                            }
-                        }
-
-                    }
-                }
-
-            }
-        } else {
-            $allowtag = 1;
-        }
-
-        if ($allowtag > 0) {
-
-            if ($allowtagp > -1) {
-
-                if ($allowtagp > 0) {
-                    return true;
-                } else {
+            foreach ($config->get('SMWFileProtectReferUsers') as $label) {
+                $values = $store->getPropertyValues($subject, DIProperty::newFromUserLabel($label));
+                if ($values && !self::listsUser($values, $userPage)) {
                     return false;
                 }
-
             }
 
-            return true;
-
-        } else {
-            return false;
+            foreach ($config->get('SMWFileProtectReferProps') as $label) {
+                foreach ($store->getPropertyValues($subject, DIProperty::newFromUserLabel($label)) as $value) {
+                    if (!($value instanceof SMWDIBoolean) || !$value->getBoolean()) {
+                        return false;
+                    }
+                }
+            }
         }
+        return true;
     }
 
     /**
-     * Load the referers list for the article $pageid
+     * Whether $values (pages, or comma-separated page names) include $userPage.
      */
-
-    private function loadListReferer($pageid)
+    private static function listsUser(array $values, Title $userPage): bool
     {
-
-        if (! is_numeric($pageid)) {
-            return array();
-        }
-        //$SQL2 = "select g.il_from from ".$this->db_image_links." g, ".$this->db_page." p where g.il_to=p.page_title and p.page_id=?";
-
-        $table = array( 'imagelinks', 'page' );
-        $vars = array( 'il_from' );
-        $conds = array( 'il_to=page_title', 'page_id='.$pageid );
-        $options = array();
-        $condoptions = array();
-
-        $result = $this->dbr->select($table, $vars, $conds, 'SMWFileProtect::loadListReferer', $options, $condoptions);
-
-        // $tbs=$this->dbr->safeQuery($SQL2,$pageid);
-
-        $listReferer = array();
-        $i = 0;
-
-        foreach ($result as $row) {
-            $title = Title::newFromId($row->il_from);
-            if ((get_class($title) == "Title") && ($title->exists())) {
-                $listReferer[$i] = $title->getPrefixedText();
-                $i++;
+        foreach ($values as $value) {
+            if ($value instanceof DIWikiPage) {
+                $titles = [$value->getTitle()];
+            } elseif ($value instanceof SMWDIBlob) {
+                $titles = array_map(
+                    static fn ($name) => Title::newFromText(trim($name)),
+                    explode(',', $value->getString())
+                );
+            } else {
+                continue;
+            }
+            foreach ($titles as $title) {
+                if ($title && $userPage->equals($title)) {
+                    return true;
+                }
             }
         }
-
-        return($listReferer);
+        return false;
     }
-
-
-    /**
-    * This function returns to results of a certain query
-    * Thank you Yaron Koren for advices concerning this code
-    * @param $query_string String : the query
-    * @param $properties_to_display array(String): array of property names to display
-    * @param $display_title Boolean : add the page title in the result
-    * @return TODO
-    */
-    public static function getQueryResults($query_string, $properties_to_display, $display_title)
-    {
-
-        // Ensure SMW is loaded
-        if (!class_exists('SMWQueryProcessor')) {
-            throw new \RuntimeException('Semantic MediaWiki is not installed or enabled.');
-        }
-
-        $params = array();
-        $inline = true;
-        $printlabel = "";
-        $printouts = array();
-
-        // add the page name to the printouts
-        if ($display_title) {
-            $to_push = new SMWPrintRequest(SMWPrintRequest::PRINT_THIS, $printlabel);
-            array_push($printouts, $to_push);
-        }
-
-        var_dump($properties_to_display);
-        // Push the properties to display in the printout array.
-        foreach ($properties_to_display as $property) {
-            var_dump($property);
-            if (strpos($property, 'Property:') !== 0) {
-                $property = 'Property:' . $property;
-            }
-            $diProperty = new DIProperty($property);
-            var_dump($diProperty);
-            $to_push = new SMWPrintRequest(
-                SMWPrintRequest::PRINT_PROP,
-                $property // <-- Modern SMW property creation
-            );
-
-            array_push($printouts, $to_push);
-        }
-
-        SMWQueryProcessor::addThisPrintout($printouts, $params);
-        $params = SMWQueryProcessor::getProcessedParams($params, $printouts);
-        $format = null;
-
-        $query = SMWQueryProcessor::createQuery($query_string, $params, $inline, $format, $printouts);
-        $results = smwfGetStore()->getQueryResult($query);
-
-        return $results;
-    }
-
-
-
-    public function groupCheck($user)
-    {
-
-        global $SMWFileProtectRights;
-        foreach ($SMWFileProtectRights as $grp) {
-            if (in_array($grp, $user->getGroups())) {
-                return true;
-            }
-        }
-    }
-
 }

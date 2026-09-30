@@ -1,14 +1,17 @@
 {
     "name": "SMWFileProtect",
-    "version": "0.4.0",
+    "version": "0.5.0",
     "author": [
         "Toni Hermoso Pulido <toniher@cau.cat>"
     ],
-	  "url": "https://github.com/ProteoWiki/SMWFileProtect",
+    "url": "https://github.com/ProteoWiki/SMWFileProtect",
     "description": "Protects files and namespaces in Semantic MediaWiki based on user rights and properties.",
     "type": "other",
     "requires": {
-        "MediaWiki": ">= 1.35",
+        "MediaWiki": ">= 1.43.0",
+        "platform": {
+            "php": ">= 8.1"
+        },
         "extensions": {
             "SemanticMediaWiki": "*"
         }
@@ -18,33 +21,45 @@
         "SMWNSProtect": "SMWNSProtect_body.php",
         "SMWFileProtectHooks": "SMWFileProtect.hooks.php"
     },
+    "config_prefix": "",
+    "ConfigRegistry": {
+        "smwfileprotect": "SMWFileProtectHooks::makeConfig"
+    },
     "config": {
         "SMWFileProtectRights": {
             "value": ["sysop"],
-            "description": "User groups allowed to bypass file protection."
-        },
-        "SMWFileProtectReferUsers": {
-            "value": ["Has User"],
-            "description": "User page properties used for file protection."
-        },
-        "SMWFileProtectReferProps": {
-            "value": ["Is Visible"],
-            "description": "Boolean properties used for file protection."
+            "description": "User groups that can always read files, whatever pages use them."
         },
         "SMWFileProtectReferNS": {
             "value": true,
-            "description": "Enable namespace-based protection."
+            "description": "Deny a file if a page using it is in a namespace the user cannot read under Lockdown."
         },
-        "SMWFileProtectWhiteListPages": {
-            "value": [],
-            "description": "Pages whitelisted from file protection."
+        "SMWFileProtectReferSMW": {
+            "value": false,
+            "description": "Also deny a file based on the SMWFileProtectReferUsers and SMWFileProtectReferProps properties of the pages using it."
+        },
+        "SMWFileProtectReferUsers": {
+            "value": ["Has User"],
+            "description": "Properties listing the users allowed to read the files used on a page."
+        },
+        "SMWFileProtectReferProps": {
+            "value": ["Is Visible"],
+            "description": "Boolean properties that must be true on a page for its files to be readable."
+        }
+    },
+    "HookHandlers": {
+        "main": {
+            "class": "SMWFileProtectHooks",
+            "services": [
+                "ConfigFactory",
+                "MainConfig",
+                "ConnectionProvider",
+                "UserGroupManager"
+            ]
         }
     },
     "Hooks": {
-        "getUserPermissionsErrors": [
-            "SMWFileProtectHooks::onGetUserPermissionsErrors",
-            "SMWFileProtectHooks::onGetUserPermissionsErrorsNS"
-        ]
+        "getUserPermissionsErrors": "main"
     },
     "manifest_version": 2,
     "license-name": "GPL-2.0-or-later"
